@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Windows;
 using System.Windows.Input;
 
@@ -64,7 +65,7 @@ namespace NetworkTester
 
         private void StartPing(string timeout, string countofping)
         {
-            tbConsole.AppendText("\nStarting Ping...");
+            tbConsole.AppendText("\nStarting Ping... | Address: " + tbIPAddress.Text + ", Count: " + countofping + ", TimeOut: " + timeout);
             try
             {
                 if (int.TryParse(timeout, out int timeOutSeconds))
@@ -110,17 +111,70 @@ namespace NetworkTester
             }
         }
 
-        private void TbPingCount_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        private void InputNumber(object sender, TextCompositionEventArgs e)
         {
             bool cut = false;
             string check = "0123456789\b";
 
-            if (check.Contains(e.Text) == false)
+            if (!check.Contains(e.Text))
             {
                 cut = true;
             }
 
             e.Handled = cut;
+        }
+
+        private void BtnPortCheck_Click(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(tbPort.Text, out int port))
+            {
+                if (PortCheck(port, ssl: (bool)cbIsSSLPort.IsChecked))
+                {
+                    tbConsole.AppendText("\nPortCheck Successfly Completed.");
+                    tbPortError.Visibility = Visibility.Collapsed;
+                    tbPortSuccess.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        private bool PortCheck(int port, bool ssl)
+        {
+            string Address;
+
+            if (tbIPAddress.Text == "localhost")
+            {
+                Address = "127.0.0.1";
+            }
+            else
+            {
+                Address = tbIPAddress.Text;
+            }
+
+            if (ssl)
+            {
+                // 未完成
+                return false;
+            }
+            else
+            {
+                try
+                {
+                    using (TcpClient tcp = new TcpClient(Address, port))
+                    {
+                        tbConsole.AppendText("\nStarting PortCheck... | Address: " + Address + ", Port: " + port);
+                        tcp.Connect(Address, port);
+                        tcp.Close();
+                        return tcp.Connected;
+                    }
+                }catch (SocketException ex)
+                {
+                    tbPortSuccess.Visibility = Visibility.Collapsed;
+                    tbPortError.Visibility = Visibility.Visible;
+                    tbPortError.Text = "接続中にエラーが発生しました。コンソールを確認してください。";
+                    tbConsole.AppendText("\nPortCheck Failed. | Errorcode: " + ex.SocketErrorCode + "\n" + ex.Message + "\nStackTrace: \n" + ex.StackTrace);
+                    return false;
+                }
+            }
         }
     }
 }
