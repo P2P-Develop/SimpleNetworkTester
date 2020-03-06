@@ -7,6 +7,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
+        <!--#region レイアウト-->
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*" />
             <ColumnDefinition Width="2.5*" />
@@ -15,10 +16,16 @@
             <RowDefinition Height="1*" />
             <RowDefinition Height="4.5*" />
         </Grid.RowDefinitions>
+        <!--#endregion-->
+        
+        <!--#region IPアドレス入力欄-->
         <StackPanel Margin="10, 10">
-                <TextBlock Text="対象IPアドレス" FontSize="15" HorizontalAlignment="Center" />
-                <TextBox x:Name="tbIPAddress" FontSize="25" TextAlignment="Center" HorizontalScrollBarVisibility="Auto" AcceptsReturn="False" AcceptsTab="False" TextInput="TbIPAddress_TextInput"/>
-            </StackPanel>
+            <TextBlock Text="対象IPアドレス" FontSize="15" HorizontalAlignment="Center" />
+            <TextBox x:Name="tbIPAddress" FontSize="25" TextAlignment="Center" HorizontalScrollBarVisibility="Auto" AcceptsReturn="False" AcceptsTab="False" />
+        </StackPanel>
+        <!--#endregion-->
+        
+        <!--#region メイン-->
         <TabControl x:Name="tabControl" Grid.Row="0" Grid.Column="1" Grid.RowSpan="2">
             <TabItem Header="Ping">
                 <StackPanel Margin="10">
@@ -83,9 +90,15 @@
                 </StackPanel>
             </TabItem>
         </TabControl>
-        <StackPanel Grid.Row="1" Margin="10">
-            <TextBlock Text="コンソール" FontSize="13" />
+        <!--#endregion-->
+        
+        <!--#region コンソール-->
+        <DockPanel Grid.Row="1" Margin="10">
+            <StackPanel DockPanel.Dock="Top">
+                <TextBlock Text="コンソール" FontSize="13" />
+            </StackPanel>
             <TextBox x:Name="tbConsole" IsReadOnly="True" VerticalScrollBarVisibility="Visible" Height="Auto" />
-        </StackPanel>
+        </DockPanel>
+        <!--#endregion-->
     </Grid>
 </Window>

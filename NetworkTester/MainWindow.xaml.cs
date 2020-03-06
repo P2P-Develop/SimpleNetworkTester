@@ -11,27 +11,33 @@ namespace NetworkTester
     /// </summary>
     public partial class MainWindow : Window
     {
+        #region Constructor
+
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void TbIPAddress_TextInput(object sender, TextCompositionEventArgs e)
-        {
+        #endregion
 
+        #region Basic Event Handlers
+
+        private void InputNumber(object sender, TextCompositionEventArgs e)
+        {
+            bool cut = false;
+            string check = "0123456789\b";
+
+            if (!check.Contains(e.Text))
+            {
+                cut = true;
+            }
+
+            e.Handled = cut;
         }
 
-        private void CbIsSSLPort_Checked(object sender, RoutedEventArgs e)
-        {
-            cbPort.Visibility = Visibility.Collapsed;
-            cbSSLPort.Visibility = Visibility.Visible;
-        }
+        #endregion
 
-        private void CbIsSSLPort_Unchecked(object sender, RoutedEventArgs e)
-        {
-            cbPort.Visibility = Visibility.Visible;
-            cbSSLPort.Visibility = Visibility.Collapsed;
-        }
+        #region Ping Methods
 
         private void BtnPing_Click(object sender, RoutedEventArgs e)
         {
@@ -60,12 +66,18 @@ namespace NetworkTester
             {
                 _pingCount = "5";
             }
-            StartPing(_timeOutSeconds, _pingCount);
+            StartPing(tbIPAddress.Text, _timeOutSeconds, _pingCount);
         }
 
-        private void StartPing(string timeout, string countofping)
+        /// <summary>
+        /// 指定したIPアドレスにPingを送信します。
+        /// </summary>
+        /// <param name="address">Ping送信対象のアドレス。</param>
+        /// <param name="timeout">次のPingへのタイムアウト。</param>
+        /// <param name="countofping">Pingを送信する回数。</param>
+        private void StartPing(string address, string timeout, string countofping)
         {
-            tbConsole.AppendText("\nStarting Ping... | Address: " + tbIPAddress.Text + ", Count: " + countofping + ", TimeOut: " + timeout);
+            tbConsole.AppendText("\nStarting Ping... | Address: " + address + ", Count: " + countofping + ", TimeOut: " + timeout);
             try
             {
                 if (int.TryParse(timeout, out int timeOutSeconds))
@@ -73,18 +85,14 @@ namespace NetworkTester
                     if (int.TryParse(countofping, out int pingCount))
                     {
                         Ping ping = new Ping();
-                        string Address;
-                        if (tbIPAddress.Text == "localhost")
+                        if (address == "localhost")
                         {
-                            Address = "127.0.0.1";
+                            address = "127.0.0.1";
                         }
-                        else
-                        {
-                            Address = tbIPAddress.Text;
-                        }
+
                         for (int i = 0; i < pingCount; i++)
                         {
-                            PingReply reply = ping.Send(Address);
+                            PingReply reply = ping.Send(address);
                             if (reply.Status == IPStatus.Success)
                             {
                                 tbConsole.AppendText("\nReply from " + reply.Address.ToString() + ": bytes=" + reply.Buffer.Length.ToString() + " time=" + reply.RoundtripTime.ToString() + "ms TTL=" + reply.Options.Ttl.ToString());
@@ -111,24 +119,27 @@ namespace NetworkTester
             }
         }
 
-        private void InputNumber(object sender, TextCompositionEventArgs e)
+        #endregion
+
+        #region Port Check Methods
+
+        private void CbIsSSLPort_Checked(object sender, RoutedEventArgs e)
         {
-            bool cut = false;
-            string check = "0123456789\b";
+            cbPort.Visibility = Visibility.Collapsed;
+            cbSSLPort.Visibility = Visibility.Visible;
+        }
 
-            if (!check.Contains(e.Text))
-            {
-                cut = true;
-            }
-
-            e.Handled = cut;
+        private void CbIsSSLPort_Unchecked(object sender, RoutedEventArgs e)
+        {
+            cbPort.Visibility = Visibility.Visible;
+            cbSSLPort.Visibility = Visibility.Collapsed;
         }
 
         private void BtnPortCheck_Click(object sender, RoutedEventArgs e)
         {
             if (int.TryParse(tbPort.Text, out int port))
             {
-                if (PortCheck(port, ssl: (bool)cbIsSSLPort.IsChecked))
+                if (PortCheck(tbIPAddress.Text, port, ssl: (bool)cbIsSSLPort.IsChecked))
                 {
                     tbConsole.AppendText("\nPortCheck Successfly Completed.");
                     tbPortError.Visibility = Visibility.Collapsed;
@@ -137,17 +148,18 @@ namespace NetworkTester
             }
         }
 
-        private bool PortCheck(int port, bool ssl)
+        /// <summary>
+        /// 指定したIPアドレスのポートが開放出来ているかを<see cref="TcpClient"/>で確認します。未完成です。
+        /// </summary>
+        /// <param name="address">ポートチェックの対象アドレス。</param>
+        /// <param name="port">ポートチェック対象のポート。</param>
+        /// <param name="ssl">SSLポートのチェックを行うかどうか。</param>
+        /// <returns>ポートチェックの結果。</returns>
+        private bool PortCheck(string address, int port, bool ssl)
         {
-            string Address;
-
-            if (tbIPAddress.Text == "localhost")
+            if (address == "localhost")
             {
-                Address = "127.0.0.1";
-            }
-            else
-            {
-                Address = tbIPAddress.Text;
+                address = "127.0.0.1";
             }
 
             if (ssl)
@@ -159,10 +171,10 @@ namespace NetworkTester
             {
                 try
                 {
-                    using (TcpClient tcp = new TcpClient(Address, port))
+                    using (TcpClient tcp = new TcpClient(address, port))
                     {
-                        tbConsole.AppendText("\nStarting PortCheck... | Address: " + Address + ", Port: " + port);
-                        tcp.Connect(Address, port);
+                        tbConsole.AppendText("\nStarting PortCheck... | Address: " + address + ", Port: " + port);
+                        tcp.Connect(address, port);
                         tcp.Close();
                         return tcp.Connected;
                     }
@@ -176,5 +188,7 @@ namespace NetworkTester
                 }
             }
         }
+
+        #endregion
     }
 }
